@@ -2,11 +2,12 @@ package modal
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
+	"math/big"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -75,10 +76,20 @@ func authTokenGetFetcher(client pb.ModalClientClient) tokenFetcher {
 // The delay is measured from the remaining lifetime as this client sees it, so a client
 // whose clock is skewed relative to the issuer still keeps a margin proportional to the
 // lifetime it observes.
+// secureRandFloat64 returns a cryptographically secure random float64 in [0, 1).
+func secureRandFloat64() float64 {
+	const precision = 1 << 53
+	n, err := rand.Int(rand.Reader, big.NewInt(precision))
+	if err != nil {
+		return 0
+	}
+	return float64(n.Int64()) / float64(precision)
+}
+
 func newTokenAndExpiry(token string, expiry int64) *tokenAndExpiry {
 	now := time.Now().Unix()
 	remaining := max(expiry-now, 0)
-	fraction := refreshFraction + rand.Float64()*refreshJitter
+	fraction := refreshFraction + secureRandFloat64()*refreshJitter
 	return &tokenAndExpiry{
 		token:     token,
 		expiry:    expiry,
