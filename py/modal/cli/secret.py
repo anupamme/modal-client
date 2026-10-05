@@ -212,7 +212,8 @@ def get_text_from_editor(key) -> str:
             # not tested, but according to https://stackoverflow.com/questions/1442841/lauch-default-editor-like-webbrowser-module
             # this should open an editor on Windows...
             input("Pressing enter will open an external editor to allow you to edit the secret value...")
-            status_code = os.system(bufferfile.name)
+            os.startfile(bufferfile.name)  # type: ignore[attr-defined]
+            status_code = 0
 
         if status_code != 0:
             raise ValueError(
